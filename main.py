@@ -1,34 +1,27 @@
 import cv2
-
-#img = cv2.imread('ludzie.jpg')
-#img = cv2.resize(img, (700,400))
-
-#print(type(img))
-#print(img.shape)
-
-#cv2.imshow('image', img)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-
+from flask import Flask
+from flask_restful import Resource, Api
 
 # initialize the HOG descriptor/person detector
 hog = cv2.HOGDescriptor()
 hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
-# load image
-image = cv2.imread('ludzie.jpg')
-image = cv2.resize(image, (700, 400))
+app = Flask(__name__)
+api = Api(app)
 
-# detect people in the image
-(rects, weights) = hog.detectMultiScale(image, winStride=(4, 4), padding=(8, 8), scale=1.05)
+class PeopleCounter(Resource):
+    def get(self):
+        # load image
+        image = cv2.imread('ludzie.jpg')
+        image = cv2.resize(image, (700, 400))
 
-# draw the bounding boxes
-for (x, y, w, h) in rects:
-    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        # detect people in the image
+        (rects, weights) = hog.detectMultiScale(image, winStride=(4, 4), padding=(8, 8), scale=1.05)
 
-print(f'Found {len(rects)} humans')
+        return {'peopleCount': len(rects)}
 
-# show the output images
-cv2.imshow("People detector", image)
-cv2.waitKey(0)
 
+api.add_resource(PeopleCounter, '/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
