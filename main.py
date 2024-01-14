@@ -15,8 +15,10 @@ class PeopleCounter(Resource):
         image = cv2.imread('ludzie.jpg')
         image = cv2.resize(image, (700, 400))
 
+
         # detect people in the image
         (rects, weights) = hog.detectMultiScale(image, winStride=(4, 4), padding=(8, 8), scale=1.05)
+
 
         return {'peopleCount': len(rects)}
 
