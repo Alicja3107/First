@@ -4,7 +4,6 @@ from flask_restful import Resource, Api
 import numpy as np
 import requests
 
-
 # initialize the HOG descriptor/person detector
 hog = cv2.HOGDescriptor()
 hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -38,7 +37,19 @@ class PeopleCounterDynamicUrl(Resource):
         return {'peopleCount': len(rects)}
 
 
+class PeopleCounterPost(Resource):
+    def post(self):
+        file = request.files['file']
+        image_data = np.frombuffer(file.read(), np.uint8)
+        image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+        image = cv2.resize(image, (700, 400))
+        (rects, weights) = hog.detectMultiScale(image, winStride=(4, 4), padding=(8, 8), scale=1.05)
+
+        return {'peopleCount': len(rects)}
+
+
 api.add_resource(PeopleCounterStatic, '/')
 api.add_resource(PeopleCounterDynamicUrl, '/dynamic')
+api.add_resource(PeopleCounterPost, '/count_people')
 if __name__ == '__main__':
     app.run(debug=True)
