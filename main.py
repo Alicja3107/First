@@ -1,6 +1,9 @@
 import cv2
 from flask import Flask, request
 from flask_restful import Resource, Api
+import numpy as np
+import requests
+
 
 # initialize the HOG descriptor/person detector
 hog = cv2.HOGDescriptor()
@@ -13,7 +16,7 @@ api = Api(app)
 class PeopleCounterStatic(Resource):
     def get(self):
         # load image
-        image = cv2.imread('wroclaw_glowny.jpeg')
+        image = cv2.imread('ludzie_przystanek.jpg')
         image = cv2.resize(image, (700, 400))
 
         # detect people in the image
@@ -24,18 +27,18 @@ class PeopleCounterStatic(Resource):
 
 class PeopleCounterDynamicUrl(Resource):
     def get(self):
-        # TODO:
-        # 1. Pobrać zdjęcie z otrzymanego adresu
-        # 2. Pobrane zdjęcie można zapisać na dysku lub przetwarzać je w pamięci podręcznej
-        # 3. Załadowane zjęcie do zmiennej image przekazać do algorytmu hog.detectMultiScale i zwrócić z endpointu liczbę wykrytych osób.
-
         url = request.args.get('url')
         print('url', url)
-        return {'peopleCount': 0}
+        response = requests.get(url)
+        image_data = np.frombuffer(response.content, np.uint8)
+        image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+        image = cv2.resize(image, (700, 400))
+        (rects, weights) = hog.detectMultiScale(image, winStride=(4, 4), padding=(8, 8), scale=1.05)
+
+        return {'peopleCount': len(rects)}
 
 
 api.add_resource(PeopleCounterStatic, '/')
 api.add_resource(PeopleCounterDynamicUrl, '/dynamic')
-
 if __name__ == '__main__':
     app.run(debug=True)
